@@ -107,4 +107,4 @@ module.exports = function (config) {
             suite: 'unit'
         }
     });
-}
+};

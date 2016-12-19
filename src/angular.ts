@@ -5,8 +5,11 @@
 /// <reference path="../typings/index.d.ts" />
 
 interface IScope {
-    $watch?: Function;
-    $digest?: Function;
+    $watch(
+        whatchFn: (scope: IScope) => void,
+        listenerFn?: (oldValue: any, newValue: any, scope: IScope) => void
+    );
+    $digest();
 }
 
 interface IWatcher {

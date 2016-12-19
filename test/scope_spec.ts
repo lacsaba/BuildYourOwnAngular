@@ -8,7 +8,7 @@
 
 describe('Scope', function () {
     let scope: IScopeExt;
-    it('can be constructed and used as an object', function () {
+    it('can be constructed and used as an object', () => {
         scope = new Scope();
         scope.aProperty = 1;
 
@@ -17,12 +17,10 @@ describe('Scope', function () {
 
     describe('digest', function () {
 
-        beforeEach(function () {
-            scope = new Scope();
-        });
+        beforeEach(() => scope = new Scope());
 
-        it('calls the listener function of a watch on first $digest', function () {
-            let watchFn = function () { return 'wat'; };
+        it('calls the listener function of a watch on first $digest', () => {
+            let watchFn = () => 'wat';
             let listenerFn = jasmine.createSpy("wat");
             scope.$watch(watchFn, listenerFn);
 
@@ -31,7 +29,7 @@ describe('Scope', function () {
             expect(listenerFn).toHaveBeenCalled();
         });
 
-        it('calls the watch function with the scope as the argument', function () {
+        it('calls the watch function with the scope as the argument', () => {
             let watchFn = jasmine.createSpy("wut");
             let listenerFn = function () {};
 
@@ -42,13 +40,13 @@ describe('Scope', function () {
             expect(watchFn).toHaveBeenCalledWith(scope);
         });
 
-        it('calls the listener function when the watched value changes', function (){
+        it('calls the listener function when the watched value changes', () => {
             scope.someValue = 'a';
             scope.counter = 0;
 
             scope.$watch(
-                function () { return scope.someValue; },
-                function (newValue, oldValue, scope) { scope.counter++;}
+                (scope: IScopeExt) =>  scope.someValue ,
+                (newValue, oldValue, scope: IScopeExt) => scope.counter++
             );
 
             expect(scope.counter).toBe(0);
@@ -66,11 +64,11 @@ describe('Scope', function () {
             expect(scope.counter).toBe(2);
         });
 
-        it('calls the listener when watch value is first undefined', function () {
+        it('calls the listener when watch value is first undefined', () => {
             scope.counter = 0;
             scope.$watch(
-                function () { return scope.someValue; },
-                function (newValue, oldValue, scope) { scope.counter++;}
+                (scope: IScopeExt) =>  scope.someValue ,
+                (newValue, oldValue, scope: IScopeExt) => scope.counter++
             );
 
             scope.$digest();
