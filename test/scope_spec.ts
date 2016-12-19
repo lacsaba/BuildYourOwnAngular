@@ -1,28 +1,29 @@
 /**
  * Created by LCsaba on 16/12/17.
  */
-'use strict';
 
-var Scope = require('../src/scope');
+// <reference path="..\typings\index.d.ts" />
+/// <reference path="..\src\angular.ts" />
+
 
 describe('Scope', function () {
+    let scope: IScopeExt;
     it('can be constructed and used as an object', function () {
-        var scope = new Scope();
+        scope = new Scope();
         scope.aProperty = 1;
 
         expect(scope.aProperty).toBe(1);
     });
 
     describe('digest', function () {
-        var scope;
 
         beforeEach(function () {
             scope = new Scope();
         });
 
         it('calls the listener function of a watch on first $digest', function () {
-            var watchFn = function () { return 'wat'; };
-            var listenerFn = jasmine.createSpy();
+            let watchFn = function () { return 'wat'; };
+            let listenerFn = jasmine.createSpy("wat");
             scope.$watch(watchFn, listenerFn);
 
             scope.$digest();
@@ -31,8 +32,8 @@ describe('Scope', function () {
         });
 
         it('calls the watch function with the scope as the argument', function () {
-            var watchFn = jasmine.createSpy();
-            var listenerFn = function () {};
+            let watchFn = jasmine.createSpy("wut");
+            let listenerFn = function () {};
 
             scope.$watch(watchFn, listenerFn);
 

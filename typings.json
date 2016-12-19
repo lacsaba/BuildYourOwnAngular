@@ -1,0 +1,9 @@
+{
+  "globalDependencies": {
+    "karma": "registry:dt/karma#0.13.9+20160811111312",
+    "karma-jasmine": "registry:dt/karma-jasmine#0.0.0+20160510010627"
+  },
+  "dependencies": {
+    "lodash": "registry:npm/lodash#4.0.0+20161015015725"
+  }
+}
