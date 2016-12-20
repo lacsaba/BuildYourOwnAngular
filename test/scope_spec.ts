@@ -74,5 +74,55 @@ describe('Scope', function () {
             scope.$digest();
             expect(scope.counter).toBe(1);
         });
+
+        it('calls listener with new value as old value the first time', () => {
+            scope.someValue = 123;
+            let oldValueGiven = null;
+
+            scope.$watch(
+                (scope: IScopeExt) =>  scope.someValue ,
+                (newValue, oldValue, scope: IScopeExt) => oldValueGiven = oldValue
+            );
+
+            scope.$digest();
+            expect(oldValueGiven).toBe(123);
+        });
+
+        it('may have watchers that omit the listener', () => {
+            let watchFn = jasmine.createSpy('wat').and.returnValue('something');
+            scope.$watch(watchFn);
+
+            scope.$digest();
+
+            expect(watchFn).toHaveBeenCalled();
+        });
+
+        it('triggers chained watchers in the same digest', () => {
+            scope.name = 'Jane';
+            scope.$watch(
+                (scope: IScopeExt) =>  scope.nameUpper ,
+                (newValue, oldValue, scope: IScopeExt) => {
+                    if (newValue) {
+                        scope.initial = newValue.substring(0, 1) + '.';
+                    }
+                }
+            );
+
+            scope.$watch(
+                (scope: IScopeExt) =>  scope.name ,
+                (newValue, oldValue, scope: IScopeExt) => {
+                    if (newValue) {
+                        scope.nameUpper = newValue.toUpperCase();
+                    }
+                }
+            );
+
+            scope.$digest();
+            expect(scope.initial).toBe('J.');
+
+            scope.name = 'Bob';
+            scope.$digest();
+            expect(scope.initial).toBe('B.');
+        });
     });
 });

@@ -10,6 +10,7 @@ interface IScope {
         listenerFn?: (oldValue: any, newValue: any, scope: IScope) => void
     );
     $digest();
+    $$digestOnce();
 }
 
 interface IWatcher {
@@ -28,22 +29,32 @@ class Scope implements IScope {
     $watch(watchFn, listenerFn) {
         let watcher = {
             watchFn: watchFn,
-            listenerFn: listenerFn,
+            listenerFn: listenerFn || function () {},
             last: initWatchVal
         };
         this.$$watchers.push(watcher);
     }
 
     $digest() {
-        let self = this;
-        let newValue, oldValue;
-        _.forEach(this.$$watchers, function (watcher) {
-            newValue = watcher.watchFn(self);
+        let dirty;
+        do {
+            dirty = this.$$digestOnce();
+        } while (dirty);
+    }
+
+    $$digestOnce() {
+        let newValue, oldValue, dirty = false;
+        _.forEach(this.$$watchers, (watcher) => {
+            newValue = watcher.watchFn(this);
             oldValue = watcher.last;
             if (newValue !== oldValue) {
                 watcher.last = newValue;
-                watcher.listenerFn(newValue, oldValue, self);
+                watcher.listenerFn(newValue,
+                    oldValue === initWatchVal ? newValue : oldValue,
+                    this);
+                dirty = true;
             }
         });
+        return dirty;
     }
 }
