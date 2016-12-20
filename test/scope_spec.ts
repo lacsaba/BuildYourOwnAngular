@@ -142,5 +142,45 @@ describe('Scope', function () {
 
             expect((function () { scope.$digest();})).toThrow();
         });
+
+        it('ends the digest when the last watch is clean', () => {
+            scope.array = _.range(100);
+            let watchExecutions = 0;
+
+            _.times(100, (i) => {
+                scope.$watch(
+                    (scope: IScopeExt) =>  {
+                        watchExecutions++;
+                        return scope.array[i];
+                    } ,
+                    (newValue, oldValue, scope: IScopeExt) => {}
+                );
+            });
+
+            scope.$digest();
+            expect(watchExecutions).toBe(200);
+
+            scope.array[0] = 420;
+            scope.$digest();
+            expect(watchExecutions).toBe(301);
+        });
+
+        it('does not end digest so that new watches are not run', () => {
+            scope.aValue = 'abc';
+            scope.counter = 0;
+
+            scope.$watch(
+                (scope: IScopeExt) => scope.aValue,
+                (newValue, oldValue, scope: IScopeExt) => {
+                    scope.$watch(
+                        (scope: IScopeExt) => scope.aValue,
+                        (newValue, oldValue, scope: IScopeExt) => scope.counter++
+                    );
+                }
+            );
+
+            scope.$digest();
+            expect(scope.counter).toBe(1);
+        });
     });
 });

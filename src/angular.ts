@@ -23,6 +23,7 @@ function initWatchVal() {}
 
 class Scope implements IScope {
     private $$watchers: Array<IWatcher> = [];
+    private $$lastDirtyWatch: IWatcher = null;
 
     constructor() {}
 
@@ -33,10 +34,12 @@ class Scope implements IScope {
             last: initWatchVal
         };
         this.$$watchers.push(watcher);
+        this.$$lastDirtyWatch = null;
     }
 
     $digest() {
         let dirty, ttl = 10;
+        this.$$lastDirtyWatch = null;
         do {
             dirty = this.$$digestOnce();
             if (dirty && !(ttl--)) {
@@ -52,11 +55,14 @@ class Scope implements IScope {
             newValue = watcher.watchFn(this);
             oldValue = watcher.last;
             if (newValue !== oldValue) {
+                this.$$lastDirtyWatch = watcher;
                 watcher.last = newValue;
                 watcher.listenerFn(newValue,
                     oldValue === initWatchVal ? newValue : oldValue,
                     this);
                 dirty = true;
+            } else if (watcher === this.$$lastDirtyWatch) {
+                return false;
             }
         });
         return dirty;

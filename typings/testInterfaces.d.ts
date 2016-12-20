@@ -12,4 +12,6 @@ interface IScopeExt extends IScope {
     name?: any;
     nameUpper?: any;
     initial?: any;
+    array?: any;
+    aValue?: any;
 }
