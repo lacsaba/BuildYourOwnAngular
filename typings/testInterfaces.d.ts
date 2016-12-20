@@ -6,6 +6,8 @@
 interface IScopeExt extends IScope {
     aProperty?: any;
     counter?: number;
+    counterA?: number;
+    counterB?: number;
     someValue?: any;
     name?: any;
     nameUpper?: any;

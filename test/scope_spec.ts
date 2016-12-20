@@ -124,5 +124,23 @@ describe('Scope', function () {
             scope.$digest();
             expect(scope.initial).toBe('B.');
         });
+
+        it('gives up on the watches after 10 iterations', () => {
+            scope.counterA = 0;
+            scope.counterB = 0;
+
+            scope.$watch(
+                (scope: IScopeExt) =>  scope.counterA ,
+                (newValue, oldValue, scope: IScopeExt) => scope.counterB++
+            );
+
+            scope.$$digestOnce();
+            scope.$watch(
+                (scope: IScopeExt) =>  scope.counterB ,
+                (newValue, oldValue, scope: IScopeExt) => scope.counterA++
+            );
+
+            expect((function () { scope.$digest();})).toThrow();
+        });
     });
 });
