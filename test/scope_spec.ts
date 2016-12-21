@@ -249,5 +249,103 @@ describe('Scope', function () {
             scope.$digest();
             expect(scope.counter).toBe(1);
         });
+
+        it('allows destroying a $watch with a removal function', () => {
+            scope.aValue = 'abc';
+            scope.counter = 0;
+
+            let destroyWatch = scope.$watch(
+                (scope: IScopeExt) => scope.aValue,
+                (newValue, oldValue, scope: IScopeExt) => scope.counter++
+            );
+
+            scope.$digest();
+            expect(scope.counter).toBe(1);
+
+            scope.aValue = 'def';
+            scope.$digest();
+            expect(scope.counter).toBe(2);
+
+            scope.aValue = 'ghi';
+            destroyWatch();
+            scope.$digest();
+            expect(scope.counter).toBe(2);
+
+        });
+
+        it('allows destroying a $watch during digest', () => {
+            scope.aValue = 'abc';
+
+            let watchCalls = [];
+
+            scope.$watch(
+                (scope: IScopeExt) => {
+                    watchCalls.push('first');
+                    return scope.aValue;
+                }
+            );
+
+            let destroyWatch = scope.$watch(
+                (scope: IScopeExt) => {
+                    watchCalls.push('second');
+                    destroyWatch();
+                }
+            );
+
+            scope.$watch(
+                (scope: IScopeExt) => {
+                    watchCalls.push('third');
+                    return scope.aValue;
+                }
+            );
+
+            scope.$digest();
+            expect(watchCalls).toEqual(['first', 'second', 'third', 'first', 'third']);
+        });
+
+        it('allows a $watch to destroy another during digest', () => {
+            scope.aValue = 'abc';
+            scope.counter = 0;
+
+            scope.$watch(
+                (scope: IScopeExt) => scope.aValue,
+                (newValue, oldValue, scope: IScopeExt) => {
+                    destroyWatch();
+                }
+            );
+
+            let destroyWatch = scope.$watch(
+                (scope: IScopeExt) => {},
+                (newValue, oldValue, scope: IScopeExt) => {}
+            );
+
+            scope.$watch(
+                (scope: IScopeExt) => scope.aValue,
+                (newValue, oldValue, scope: IScopeExt) => scope.counter++
+            );
+
+            scope.$digest();
+            expect(scope.counter).toBe(1);
+        });
+
+        it('allows destroying several $watches during digest', () => {
+            scope.aValue = 'abc';
+            scope.counter = 0;
+
+            let destroyWatch1 = scope.$watch(
+                (scope: IScopeExt) => {
+                    destroyWatch1();
+                    destroyWatch2();
+                }
+            );
+
+            let destroyWatch2 = scope.$watch(
+                (scope: IScopeExt) => scope.aValue,
+                (newValue, oldValue, scope: IScopeExt) => scope.counter++
+            );
+
+            scope.$digest();
+            expect(scope.counter).toBe(0);
+        });
     });
 });
