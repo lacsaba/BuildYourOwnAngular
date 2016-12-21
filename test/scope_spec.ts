@@ -215,5 +215,39 @@ describe('Scope', function () {
             scope.$digest();
             expect(scope.counter).toBe(1);
         });
+
+        it('catches exceptions in watch functions and continues', () => {
+            scope.aValue = 'abc';
+            scope.counter = 0;
+
+            scope.$watch(
+                (scope: IScopeExt) => { throw 'Error'; },
+                (newValue, oldValue, scope: IScopeExt) => {}
+            );
+            scope.$watch(
+                (scope: IScopeExt) => scope.aValue,
+                (newValue, oldValue, scope: IScopeExt) => scope.counter++
+            );
+
+            scope.$digest();
+            expect(scope.counter).toBe(1);
+        });
+
+        it('catches exceptions in listener functions and continues', () => {
+            scope.aValue = 'abc';
+            scope.counter = 0;
+
+            scope.$watch(
+                (scope: IScopeExt) => scope.aValue,
+                (newValue, oldValue, scope: IScopeExt) => { throw 'Error'; }
+            );
+            scope.$watch(
+                (scope: IScopeExt) => scope.aValue,
+                (newValue, oldValue, scope: IScopeExt) => scope.counter++
+            );
+
+            scope.$digest();
+            expect(scope.counter).toBe(1);
+        });
     });
 });

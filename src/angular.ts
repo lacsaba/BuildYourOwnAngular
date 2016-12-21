@@ -55,17 +55,21 @@ class Scope implements IScope {
     $$digestOnce() {
         let newValue, oldValue, dirty = false;
         _.forEach(this.$$watchers, (watcher) => {
-            newValue = watcher.watchFn(this);
-            oldValue = watcher.last;
-            if (!this.$$areEqual(newValue, oldValue, watcher.valueEq)) {
-                this.$$lastDirtyWatch = watcher;
-                watcher.last = watcher.valueEq ? _.cloneDeep(newValue) : newValue;
-                watcher.listenerFn(newValue,
-                    oldValue === initWatchVal ? newValue : oldValue,
-                    this);
-                dirty = true;
-            } else if (watcher === this.$$lastDirtyWatch) {
-                return false;
+            try {
+                newValue = watcher.watchFn(this);
+                oldValue = watcher.last;
+                if (!this.$$areEqual(newValue, oldValue, watcher.valueEq)) {
+                    this.$$lastDirtyWatch = watcher;
+                    watcher.last = watcher.valueEq ? _.cloneDeep(newValue) : newValue;
+                    watcher.listenerFn(newValue,
+                        oldValue === initWatchVal ? newValue : oldValue,
+                        this);
+                    dirty = true;
+                } else if (watcher === this.$$lastDirtyWatch) {
+                    return false;
+                }
+            } catch (e) {
+                console.log(e);
             }
         });
         return dirty;
