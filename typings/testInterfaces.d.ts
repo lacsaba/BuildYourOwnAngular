@@ -14,4 +14,5 @@ interface IScopeExt extends IScope {
     initial?: any;
     array?: any;
     aValue?: any;
+    number?: number;
 }

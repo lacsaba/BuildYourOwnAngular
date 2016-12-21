@@ -7,7 +7,8 @@
 interface IScope {
     $watch(
         whatchFn: (scope: IScope) => void,
-        listenerFn?: (oldValue: any, newValue: any, scope: IScope) => void
+        listenerFn?: (oldValue: any, newValue: any, scope: IScope) => void,
+        valuEq?: boolean
     );
     $digest();
     $$digestOnce();
@@ -17,6 +18,7 @@ interface IWatcher {
     watchFn: (scope: IScope) => any;
     listenerFn: (oldValue: any, newValue: any, scope: IScope) => void;
     last?: any;
+    valueEq?: boolean;
 }
 
 function initWatchVal() {}
@@ -27,11 +29,12 @@ class Scope implements IScope {
 
     constructor() {}
 
-    $watch(watchFn, listenerFn) {
+    $watch(watchFn, listenerFn, valueEq) {
         let watcher = {
             watchFn: watchFn,
             listenerFn: listenerFn || function () {},
-            last: initWatchVal
+            last: initWatchVal,
+            valueEq: !!valueEq
         };
         this.$$watchers.push(watcher);
         this.$$lastDirtyWatch = null;
@@ -54,9 +57,9 @@ class Scope implements IScope {
         _.forEach(this.$$watchers, (watcher) => {
             newValue = watcher.watchFn(this);
             oldValue = watcher.last;
-            if (newValue !== oldValue) {
+            if (!this.$$areEqual(newValue, oldValue, watcher.valueEq)) {
                 this.$$lastDirtyWatch = watcher;
-                watcher.last = newValue;
+                watcher.last = watcher.valueEq ? _.cloneDeep(newValue) : newValue;
                 watcher.listenerFn(newValue,
                     oldValue === initWatchVal ? newValue : oldValue,
                     this);
@@ -66,5 +69,15 @@ class Scope implements IScope {
             }
         });
         return dirty;
+    }
+
+    $$areEqual(newValue, oldValue, valueEq) {
+        if (valueEq) {
+            return _.isEqual(newValue, oldValue);
+        } else {
+            return newValue === oldValue
+                || (typeof newValue === 'number' && typeof oldValue === 'number'
+                && isNaN(newValue) && isNaN(oldValue));
+        }
     }
 }
