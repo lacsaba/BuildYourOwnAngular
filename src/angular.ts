@@ -12,6 +12,8 @@ interface IScope {
     );
     $digest();
     $$digestOnce();
+    $eval(expr, locals?: any);
+    $apply(expr);
 }
 
 interface IWatcher {
@@ -92,6 +94,18 @@ class Scope implements IScope {
             return newValue === oldValue
                 || (typeof newValue === 'number' && typeof oldValue === 'number'
                 && isNaN(newValue) && isNaN(oldValue));
+        }
+    }
+
+    $eval(expr, locals?: any) {
+        return expr(this, locals);
+    }
+
+    $apply(expr) {
+        try {
+            this.$eval(expr);
+        } finally {
+            this.$digest();
         }
     }
 }
