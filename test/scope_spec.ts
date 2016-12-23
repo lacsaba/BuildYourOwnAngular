@@ -349,53 +349,83 @@ describe('Scope', function () {
         });
     });
 
-    describe('$eval', () => {
-        let scope;
+    describe('$scope methods', () => {
+        describe('$eval', () => {
+            let scope;
 
-        beforeEach(() => {
-            scope = new Scope();
-        });
-
-        it('executes $evaled function and returns result', () => {
-            scope.aValue = 42;
-
-            let result = scope.$eval((scope) => scope.aValue);
-
-            expect(result).toBe(42);
-        });
-
-        it('passes the second $eval argument straight through', () => {
-            scope.aValue = 42;
-
-            let result = scope.$eval((scope, arg) => scope.aValue + arg, 2);
-
-            expect(result).toBe(44);
-        });
-    });
-
-    describe('$apply', () => {
-        let scope;
-
-        beforeEach(() => {
-            scope = new Scope();
-        });
-
-        it('executes the given function and starts the digest', () => {
-            scope.aValue = 'someValue';
-            scope.counter = 0;
-
-            scope.$watch(
-                (scope: IScopeExt) => scope.aValue,
-                (newValue, oldValue, scope: IScopeExt) => scope.counter++
-            );
-
-            scope.$digest();
-            expect(scope.counter).toBe(1);
-
-            scope.$apply((scope) => {
-                scope.aValue = 'someOtherValue';
+            beforeEach(() => {
+                scope = new Scope();
             });
-            expect(scope.counter).toBe(2);
+
+            it('executes $evaled function and returns result', () => {
+                scope.aValue = 42;
+
+                let result = scope.$eval((scope) => scope.aValue);
+
+                expect(result).toBe(42);
+            });
+
+            it('passes the second $eval argument straight through', () => {
+                scope.aValue = 42;
+
+                let result = scope.$eval((scope, arg) => scope.aValue + arg, 2);
+
+                expect(result).toBe(44);
+            });
+        });
+
+        describe('$apply', () => {
+            let scope;
+
+            beforeEach(() => {
+                scope = new Scope();
+            });
+
+            it('executes the given function and starts the digest', () => {
+                scope.aValue = 'someValue';
+                scope.counter = 0;
+
+                scope.$watch(
+                    (scope: IScopeExt) => scope.aValue,
+                    (newValue, oldValue, scope: IScopeExt) => scope.counter++
+                );
+
+                scope.$digest();
+                expect(scope.counter).toBe(1);
+
+                scope.$apply((scope) => {
+                    scope.aValue = 'someOtherValue';
+                });
+                expect(scope.counter).toBe(2);
+            });
+        });
+
+        describe('$evalAsync', () => {
+            let scope;
+
+            beforeEach(() => {
+                scope = new Scope();
+            });
+
+            it('executes given function later in the same cycle', () => {
+                scope.aValue = [1, 2, 3];
+                scope.asyncEvaluated = false;
+                scope.asyncEvalueatedImmediately = false;
+
+                scope.$watch(
+                    (scope: IScopeExt) => scope.aValue,
+                    (newValue, oldValue, scope: IScopeExt) => {
+                        scope.$evalAsync((scope) => {
+                            scope.asyncEvaluated = true;
+                        });
+                        scope.asyncEvaluatedImmediately = true;
+                    }
+                );
+
+                scope.$digest();
+                expect(scope.asyncEvaluated).toBe(true);
+                expect(scope.asyncEvalueatedImmediately).toBe(false);
+            });
         });
     });
 });

@@ -28,6 +28,8 @@ function initWatchVal() {}
 class Scope implements IScope {
     private $$watchers: Array<IWatcher> = [];
     private $$lastDirtyWatch: IWatcher = null;
+    private $$asyncQueue: Array<any> = [];
+    private $$state;
 
     constructor() {}
 
@@ -55,6 +57,10 @@ class Scope implements IScope {
         let dirty, ttl = 10;
         this.$$lastDirtyWatch = null;
         do {
+            while(this.$$asyncQueue.length) {
+                let asyncTask = this.$$asyncQueue.shift();
+                asyncTask.scope.$eval(asyncTask.expression);
+            }
             dirty = this.$$digestOnce();
             if (dirty && !(ttl--)) {
                 throw '10 digest iterations reached';
@@ -107,5 +113,9 @@ class Scope implements IScope {
         } finally {
             this.$digest();
         }
+    }
+
+    $evalAsync(expr) {
+        this.$$asyncQueue.push({scope: this, expression: expr});
     }
 }

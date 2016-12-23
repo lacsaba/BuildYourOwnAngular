@@ -15,4 +15,6 @@ interface IScopeExt extends IScope {
     array?: any;
     aValue?: any;
     number?: number;
+    asyncEvaluated?: boolean;
+    asyncEvaluatedImmediately?: boolean;
 }
