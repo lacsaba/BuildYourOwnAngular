@@ -17,4 +17,8 @@ interface IScopeExt extends IScope {
     number?: number;
     asyncEvaluated?: boolean;
     asyncEvaluatedImmediately?: boolean;
+    asyncEvaluatedTimes?: number;
+    phaseInWatchFunction?: any;
+    phaseInListenerFunction?: any;
+    phaseInApplyFunction?: any;
 }

@@ -14,6 +14,8 @@ interface IScope {
     $$digestOnce();
     $eval(expr, locals?: any);
     $apply(expr);
+    $evalAsync(expr);
+    $$phase;
 }
 
 interface IWatcher {
@@ -29,7 +31,7 @@ class Scope implements IScope {
     private $$watchers: Array<IWatcher> = [];
     private $$lastDirtyWatch: IWatcher = null;
     private $$asyncQueue: Array<any> = [];
-    private $$state;
+    $$phase: string = null;
 
     constructor() {}
 
@@ -56,17 +58,19 @@ class Scope implements IScope {
     $digest() {
         let dirty, ttl = 10;
         this.$$lastDirtyWatch = null;
+        this.$beginPhase('$digest');
         do {
             while(this.$$asyncQueue.length) {
                 let asyncTask = this.$$asyncQueue.shift();
                 asyncTask.scope.$eval(asyncTask.expression);
             }
             dirty = this.$$digestOnce();
-            if (dirty && !(ttl--)) {
+            if ((dirty || this.$$asyncQueue.length) && !(ttl--)) {
+                this.$clearPhase();
                 throw '10 digest iterations reached';
             }
-        } while (dirty);
-
+        } while (dirty || this.$$asyncQueue.length);
+        this.$clearPhase();
     }
 
     $$digestOnce() {
@@ -109,13 +113,44 @@ class Scope implements IScope {
 
     $apply(expr) {
         try {
+            this.$beginPhase('$apply');
             this.$eval(expr);
         } finally {
+            this.$clearPhase();
             this.$digest();
         }
     }
 
     $evalAsync(expr) {
+        /*
+        * Note that we also check the length of the current async queue in two places here:
+         • Before calling setTimeout, we make sure that the queue is empty. That’s because we don’t
+         want to call setTimeout more than we need to. If there’s something in the queue, we already
+         have a timeout set and it will eventually drain the queue.
+        * */
+        if (!this.$$phase && !this.$$asyncQueue.length) {
+            setTimeout(() => {
+                /*
+                 • Inside the setTimeout function we make sure that the queue is not empty. The queue may
+                 have been drained for some other reason before the timeout function was executed, and we
+                 don’t want to kick off a digest unnecessarily, if we have nothing to do.
+                * */
+                if (this.$$asyncQueue.length) {
+                    this.$digest();
+                }
+            }, 0);
+        }
         this.$$asyncQueue.push({scope: this, expression: expr});
+    }
+
+    $beginPhase(phase) {
+        if (this.$$phase) {
+            throw this.$$phase + ' already in progress';
+        }
+        this.$$phase = phase;
+    }
+
+    $clearPhase() {
+        this.$$phase = null;
     }
 }
