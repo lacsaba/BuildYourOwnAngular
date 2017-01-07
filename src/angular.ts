@@ -34,6 +34,7 @@ class Scope implements IScope {
     private $$asyncQueue: Array<any> = [];
     private $$applyAsyncQueue: Array<any> = [];
     private $$applyAsyncId?: any = null;
+    private $$postDigestQueue: Array<any> = [];
     $$phase: string = null;
 
     constructor() {}
@@ -85,6 +86,10 @@ class Scope implements IScope {
             }
         } while (dirty || this.$$asyncQueue.length);
         this.$clearPhase();
+
+        while (this.$$postDigestQueue.length) {
+            this.$$postDigestQueue.shift()();
+        }
     }
 
     $$digestOnce() {
@@ -188,5 +193,9 @@ class Scope implements IScope {
 
     $clearPhase() {
         this.$$phase = null;
+    }
+
+    $$postDigest(fn) {
+        this.$$postDigestQueue.push(fn);
     }
 }

@@ -620,5 +620,33 @@ describe('Scope', function () {
                 }, 50);
             });
         });
+
+        describe('$postDigest', () => {
+            let scope;
+            beforeEach(() =>  scope = new Scope());
+
+            it('runs after each digest', () => {
+                scope.counter = 0;
+                scope.$$postDigest(() => scope.counter++);
+                expect(scope.counter).toBe(0);
+                scope.$digest();
+                expect(scope.counter).toBe(1);
+                scope.$digest();
+                expect(scope.counter).toBe(1);
+            });
+
+            it('does not include $$postDigest in the digest', () => {
+                scope.aValue = 'original value';
+                scope.$$postDigest(() =>  scope.aValue = 'changed value');
+                scope.$watch(
+                    (scope) => scope.aValue,
+                    (newValue, oldValue, scope) => scope.watchedValue = newValue
+                );
+                scope.$digest();
+                expect(scope.watchedValue).toBe('original value');
+                scope.$digest();
+                expect(scope.watchedValue).toBe('changed value');
+            });
+        });
     });
 });
