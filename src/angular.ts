@@ -14,6 +14,7 @@ interface IScope {
     $$digestOnce();
     $eval(expr, locals?: any);
     $apply(expr);
+    $applyAsync(expr);
     $evalAsync(expr);
     $$phase;
 }
@@ -31,6 +32,8 @@ class Scope implements IScope {
     private $$watchers: Array<IWatcher> = [];
     private $$lastDirtyWatch: IWatcher = null;
     private $$asyncQueue: Array<any> = [];
+    private $$applyAsyncQueue: Array<any> = [];
+    private $$applyAsyncId?: any = null;
     $$phase: string = null;
 
     constructor() {}
@@ -59,6 +62,17 @@ class Scope implements IScope {
         let dirty, ttl = 10;
         this.$$lastDirtyWatch = null;
         this.$beginPhase('$digest');
+
+        /**
+        * $applyAsync should not do a digest if one happens to be launched for
+        * some other reason before the timeout triggers. In those cases the digest should
+        * drain the queue and the $applyAsync timeout should be cancelled
+        */
+        if (this.$$applyAsyncId) {
+            clearTimeout(this.$$applyAsyncId);
+            this.$$flushApplyAsync();
+        }
+
         do {
             while(this.$$asyncQueue.length) {
                 let asyncTask = this.$$asyncQueue.shift();
@@ -119,6 +133,28 @@ class Scope implements IScope {
             this.$clearPhase();
             this.$digest();
         }
+    }
+
+    /**
+     * the main point of $applyAsync is to optimize things that happen in quick
+     * succession so that they only need a single digest
+     * It is a useful little optimization for situations where you need to $apply,
+     * but know you’ll be doing it several times within a short period of time.
+     */
+    $applyAsync(expr) {
+        this.$$applyAsyncQueue.push(() => this.$eval(expr));
+        if (this.$$applyAsyncId === null) {
+            this.$$applyAsyncId = setTimeout(() => {
+                this.$apply(() => this.$$flushApplyAsync());
+            }, 0);
+        }
+    }
+
+    $$flushApplyAsync() {
+        while (this.$$applyAsyncQueue.length) {
+            this.$$applyAsyncQueue.shift()();
+        }
+        this.$$applyAsyncId = null;
     }
 
     $evalAsync(expr) {

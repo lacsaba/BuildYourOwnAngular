@@ -521,5 +521,104 @@ describe('Scope', function () {
                 }, 50);
             });
         });
+
+        describe('$applyAsync', () => {
+            let scope;
+            beforeEach(() => scope = new Scope());
+
+            it('allows async $apply with $applyAsync', (done) => {
+                scope.counter = 0;
+
+                scope.$watch(
+                    (scope: IScopeExt) =>  scope.aValue,
+                    (newValue, oldValue, scope: IScopeExt) => scope.counter++
+                );
+
+                scope.$digest();
+                expect(scope.counter).toBe(1);
+
+                scope.$applyAsync((scope) => {
+                    scope.aValue = 'abc';
+                });
+                expect(scope.counter).toBe(1);
+
+                setTimeout(() => {
+                    expect(scope.counter).toBe(2);
+                    done();
+                }, 50);
+            });
+
+            it('never executes $applyAsynced function in the same cycle', (done) => {
+                scope.aValue = [1, 2, 3];
+                scope.asyncApplied = false;
+
+                scope.$watch(
+                    (scope: IScopeExt) =>  scope.aValue,
+                    (newValue, oldValue, scope: IScopeExt) => {
+                        scope.$applyAsync((scope) => {
+                            scope.asyncApplied = true;
+                        });
+                    }
+                );
+
+                scope.$digest();
+                expect(scope.asyncApplied).toBe(false);
+                setTimeout(() => {
+                    expect(scope.asyncApplied).toBe(true);
+                    done();
+                }, 50);
+            });
+
+            it('coalesces many calls to $applyAsync', (done) => {
+                scope.counter = 0;
+
+                scope.$watch(
+                    (scope: IScopeExt) =>  {
+                        scope.counter++;
+                        return scope.aValue;
+                    },
+                    (newValue, oldValue, scope: IScopeExt) => {}
+                );
+
+                scope.$applyAsync((scope) => {
+                    scope.aValue = 'abc';
+                });
+                scope.$applyAsync((scope) => {
+                    scope.aValue = 'def';
+                });
+                setTimeout(() => {
+                    expect(scope.counter).toBe(2);
+                    done();
+                }, 50);
+            });
+
+            it('cancels and flushes $applyAsync if digested first', (done) => {
+                scope.counter = 0;
+
+                scope.$watch(
+                    (scope: IScopeExt) =>  {
+                        scope.counter++;
+                        return scope.aValue;
+                    },
+                    (newValue, oldValue, scope: IScopeExt) => {}
+                );
+
+                scope.$applyAsync((scope) => {
+                    scope.aValue = 'abc';
+                });
+                scope.$applyAsync((scope) => {
+                    scope.aValue = 'def';
+                });
+
+                scope.$digest();
+                expect(scope.counter).toBe(2);
+                expect(scope.aValue).toEqual('def');
+
+                setTimeout(() => {
+                    expect(scope.counter).toBe(2);
+                    done();
+                }, 50);
+            });
+        });
     });
 });
