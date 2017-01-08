@@ -520,6 +520,23 @@ describe('Scope', function () {
                     done();
                 }, 50);
             });
+
+            it('catches exceptions in $evalAsync', (done) => {
+                scope.aValue = 'abc';
+                scope.counter = 0;
+
+                scope.$watch(
+                    (scope: IScopeExt) =>  scope.aValue,
+                    (newValue, oldValue, scope: IScopeExt) => scope.counter++
+                );
+
+                scope.$evalAsync((scope) => { throw 'Error'; });
+
+                setTimeout(() => {
+                    expect(scope.counter).toBe(1);
+                    done();
+                }, 50);
+            });
         });
 
         describe('$applyAsync', () => {
@@ -619,6 +636,22 @@ describe('Scope', function () {
                     done();
                 }, 50);
             });
+
+            it('catches exceptions in $applyAsync', (done) => {
+                scope.$applyAsync((scope) => {
+                    throw 'Error';
+                });
+                scope.$applyAsync((scope) => {
+                    throw 'Error';
+                });
+                scope.$applyAsync((scope) => {
+                    scope.applied = true;
+                });
+                setTimeout(function() {
+                    expect(scope.applied).toBe(true);
+                    done();
+                }, 50);
+            });
         });
 
         describe('$postDigest', () => {
@@ -646,6 +679,14 @@ describe('Scope', function () {
                 expect(scope.watchedValue).toBe('original value');
                 scope.$digest();
                 expect(scope.watchedValue).toBe('changed value');
+            });
+
+            it('catches exceptions in $$postDigest', () => {
+                let didRun = false;
+                scope.$$postDigest(() =>  { throw 'Error'; });
+                scope.$$postDigest(() =>  didRun = true);
+                scope.$digest();
+                expect(didRun).toBe(true);
             });
         });
     });
