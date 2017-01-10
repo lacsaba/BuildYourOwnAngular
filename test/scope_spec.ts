@@ -690,4 +690,112 @@ describe('Scope', function () {
             });
         });
     });
+
+    describe('inheritance', () => {
+        it('inherits the parent\'s properties', () => {
+            let parent: IScopeExt = new Scope();
+            parent.aValue = [1, 2, 3];
+
+            let child = parent.$new();
+
+            expect(child.aValue).toEqual([1, 2, 3]);
+        });
+
+        it('does not cause a parent to inherit its properties', () => {
+            let parent: IScopeExt = new Scope();
+
+            let child = parent.$new();
+            child.aValue = [1, 2, 3];
+
+            expect(parent.aValue).toBeUndefined();
+        });
+
+        it('inherits the parents properties whenever they are defined', () => {
+            let parent: IScopeExt = new Scope();
+
+            let child = parent.$new();
+            parent.aValue = [1, 2, 3];
+
+            expect(child.aValue).toEqual([1, 2, 3]);
+        });
+
+        it('can manipulate a parent scopes property', () => {
+            let parent: IScopeExt = new Scope();
+            let child = parent.$new();
+            parent.aValue = [1, 2, 3];
+            child.aValue.push(4);
+            expect(child.aValue).toEqual([1, 2, 3, 4]);
+            expect(parent.aValue).toEqual([1, 2, 3, 4]);
+        });
+
+        it('can watch a property in the parent', () => {
+            let parent: IScopeExt = new Scope();
+            let child = parent.$new();
+            parent.aValue = [1, 2, 3];
+            child.counter = 0;
+            child.$watch(
+                (scope) => scope.aValue,
+                (newValue, oldValue, scope) => scope.counter++,
+                true
+            );
+            child.$digest();
+            expect(child.counter).toBe(1);
+            parent.aValue.push(4);
+            child.$digest();
+            expect(child.counter).toBe(2);
+        });
+
+        it('can be nested at any depth', () => {
+            let a: IScopeExt = new Scope();
+            let aa = a.$new();
+            let aaa = aa.$new();
+            let aab = aa.$new();
+            let ab = a.$new();
+            let abb = ab.$new();
+            a.value = 1;
+            expect(aa.value).toBe(1);
+            expect(aaa.value).toBe(1);
+            expect(aab.value).toBe(1);
+            expect(ab.value).toBe(1);
+            expect(abb.value).toBe(1);
+            ab.anotherValue = 2;
+            expect(abb.anotherValue).toBe(2);
+            expect(aa.anotherValue).toBeUndefined();
+            expect(aaa.anotherValue).toBeUndefined();
+        });
+
+        it('shadows a parents property with the same name', () => {
+            let parent: IScopeExt = new Scope();
+            let child = parent.$new();
+
+            parent.name = 'Joe';
+            child.name = 'Jill';
+
+            expect(child.name).toBe('Jill');
+            expect(parent.name).toBe('Joe');
+        });
+
+        it('does not shadow members of parent scopes attributes', () => {
+            let parent: IScopeExt = new Scope();
+            let child = parent.$new();
+
+            parent.user = { name: 'Joe' };
+            child.user.name = 'Jill';
+
+            expect(child.user.name).toBe('Jill');
+            expect(parent.user.name).toBe('Jill');
+        });
+
+        it('does not digest its parent(s)', function() {
+            let parent: IScopeExt = new Scope();
+            let child = parent.$new();
+            parent.aValue = 'abc';
+            parent.$watch(
+                (scope: IScopeExt) => scope.aValue,
+                (newValue, oldValue, scope: IScopeExt) => scope.aValueWas = newValue
+            );
+            child.$digest();
+            expect(child.aValueWas).toBeUndefined();
+        });
+    });
 });

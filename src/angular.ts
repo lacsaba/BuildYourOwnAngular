@@ -16,6 +16,7 @@ interface IScope {
     $apply(expr);
     $applyAsync(expr);
     $evalAsync(expr);
+    $new();
     $$phase;
 }
 
@@ -206,5 +207,13 @@ class Scope implements IScope {
 
     $$postDigest(fn) {
         this.$$postDigestQueue.push(fn);
+    }
+
+    $new() {
+        let ChildScope = () => {};
+        ChildScope.prototype = this;
+        let child = new ChildScope();
+        child.$$watchers = [];
+        return child;
     }
 }

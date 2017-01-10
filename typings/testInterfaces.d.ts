@@ -23,4 +23,7 @@ interface IScopeExt extends IScope {
     phaseInApplyFunction?: any;
     asyncApplied?: boolean;
     watchedValue?: any;
+    value?: any;
+    user?: any;
+    aValueWas?: any;
 }
