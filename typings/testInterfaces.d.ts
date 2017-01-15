@@ -4,26 +4,29 @@
 /// <reference path="../src/angular.ts" />
 
 interface IScopeExt extends IScope {
+    anotherValue?: any;
     aProperty?: any;
-    counter?: number;
-    counterA?: number;
-    counterB?: number;
-    someValue?: any;
-    name?: any;
-    nameUpper?: any;
-    initial?: any;
     array?: any;
-    aValue?: any;
-    number?: number;
+    asyncApplied?: boolean;
     asyncEvaluated?: boolean;
     asyncEvaluatedImmediately?: boolean;
     asyncEvaluatedTimes?: number;
-    phaseInWatchFunction?: any;
-    phaseInListenerFunction?: any;
-    phaseInApplyFunction?: any;
-    asyncApplied?: boolean;
-    watchedValue?: any;
-    value?: any;
-    user?: any;
+    aValue?: any;
     aValueWas?: any;
+    counter?: number;
+    counterA?: number;
+    counterB?: number;
+    didEvalAsync?: boolean;
+    didPostDigest?: boolean;
+    initial?: any;
+    name?: any;
+    nameUpper?: any;
+    number?: number;
+    phaseInApplyFunction?: any;
+    phaseInListenerFunction?: any;
+    phaseInWatchFunction?: any;
+    someValue?: any;
+    user?: any;
+    value?: any;
+    watchedValue?: any;
 }

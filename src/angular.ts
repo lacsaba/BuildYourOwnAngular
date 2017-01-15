@@ -16,11 +16,12 @@ interface IScope {
     $apply(expr);
     $applyAsync(expr);
     $evalAsync(expr);
-    $new();
+    $new(isolated?: boolean): IScope;
     $$everyScope(fn);
     $$phase;
     $$children: Array<IScope>;
     $$lastDirtyWatch: IWatcher;
+    $$applyAsyncId?: any;
 }
 
 interface IWatcher {
@@ -37,7 +38,7 @@ class Scope implements IScope {
     $$lastDirtyWatch: IWatcher = null;
     private $$asyncQueue: Array<any> = [];
     private $$applyAsyncQueue: Array<any> = [];
-    private $$applyAsyncId?: any = null;
+    $$applyAsyncId?: any = null;
     private $$postDigestQueue: Array<any> = [];
     $$children: Array<IScope> = [];
     $$phase: string = null;
@@ -75,8 +76,8 @@ class Scope implements IScope {
         * some other reason before the timeout triggers. In those cases the digest should
         * drain the queue and the $applyAsync timeout should be cancelled
         */
-        if (this.$$applyAsyncId) {
-            clearTimeout(this.$$applyAsyncId);
+        if (this.$root.$$applyAsyncId) {
+            clearTimeout(this.$root.$$applyAsyncId);
             this.$$flushApplyAsync();
         }
 
@@ -165,8 +166,8 @@ class Scope implements IScope {
      */
     $applyAsync(expr) {
         this.$$applyAsyncQueue.push(() => this.$eval(expr));
-        if (this.$$applyAsyncId === null) {
-            this.$$applyAsyncId = setTimeout(() => {
+        if (this.$root.$$applyAsyncId === null) {
+            this.$root.$$applyAsyncId = setTimeout(() => {
                 this.$apply(() => this.$$flushApplyAsync());
             }, 0);
         }
@@ -179,7 +180,7 @@ class Scope implements IScope {
             }
             catch (e) { console.error(e); }
         }
-        this.$$applyAsyncId = null;
+        this.$root.$$applyAsyncId = null;
     }
 
     $evalAsync(expr) {
@@ -219,10 +220,20 @@ class Scope implements IScope {
         this.$$postDigestQueue.push(fn);
     }
 
-    $new() {
-        let ChildScope = () => {};
-        ChildScope.prototype = this;
-        let child = new ChildScope();
+    $new(isolated) {
+        let child;
+        if (isolated) {
+            child = new Scope();
+            child.$root = this.$root;
+            child.$$asyncQueue = this.$$asyncQueue;
+            child.$$postDigestQueue = this.$$postDigestQueue;
+            child.$$applyAsyncQueue = this.$$applyAsyncQueue;
+        } else {
+            let ChildScope = () => {};
+            ChildScope.prototype = this;
+            child = new ChildScope();
+        }
+
         this.$$children.push(child);
         child.$$watchers = [];
         child.$$children = [];
