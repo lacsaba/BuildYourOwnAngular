@@ -16,12 +16,14 @@ interface IScope {
     $apply(expr);
     $applyAsync(expr);
     $evalAsync(expr);
-    $new(isolated?: boolean): IScope;
+    $new(isolated?: boolean, scope?: IScope): IScope;
     $$everyScope(fn);
+    $$postDigest(fn);
     $$phase;
     $$children: Array<IScope>;
     $$lastDirtyWatch: IWatcher;
     $$applyAsyncId?: any;
+    $$postDigestQueue?: Array<any>;
 }
 
 interface IWatcher {
@@ -39,7 +41,7 @@ class Scope implements IScope {
     private $$asyncQueue: Array<any> = [];
     private $$applyAsyncQueue: Array<any> = [];
     $$applyAsyncId?: any = null;
-    private $$postDigestQueue: Array<any> = [];
+    $$postDigestQueue: Array<any> = [];
     $$children: Array<IScope> = [];
     $$phase: string = null;
     $root: IScope = this;
@@ -220,21 +222,22 @@ class Scope implements IScope {
         this.$$postDigestQueue.push(fn);
     }
 
-    $new(isolated) {
+    $new(isolated, parentScope) {
         let child;
+        parentScope = parentScope || this;
         if (isolated) {
             child = new Scope();
-            child.$root = this.$root;
-            child.$$asyncQueue = this.$$asyncQueue;
-            child.$$postDigestQueue = this.$$postDigestQueue;
-            child.$$applyAsyncQueue = this.$$applyAsyncQueue;
+            child.$root = parentScope.$root;
+            child.$$asyncQueue = parentScope.$$asyncQueue;
+            child.$$postDigestQueue = parentScope.$$postDigestQueue;
+            child.$$applyAsyncQueue = parentScope.$$applyAsyncQueue;
         } else {
             let ChildScope = () => {};
             ChildScope.prototype = this;
             child = new ChildScope();
         }
 
-        this.$$children.push(child);
+        parentScope.$$children.push(child);
         child.$$watchers = [];
         child.$$children = [];
         return child;

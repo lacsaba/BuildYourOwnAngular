@@ -927,8 +927,8 @@ describe('Scope', function () {
         });
 
         it('executes $$postDigest functions on isolated scopes', () => {
-            let parent = new Scope();
-            let child = parent.$new(true);
+            let parent: IScopeExt = new Scope();
+            let child: IScopeExt = parent.$new(true);
 
             child.$$postDigest(() => child.didPostDigest = true);
             parent.$digest();
@@ -944,5 +944,41 @@ describe('Scope', function () {
             child.$digest();
             expect(applied).toBe(true);
         });
+
+        it('can take some other scope as the parent', function() {
+            var prototypeParent: IScopeExt = new Scope();
+            var hierarchyParent: IScopeExt = new Scope();
+            var child: IScopeExt = prototypeParent.$new(false, hierarchyParent);
+            prototypeParent.a = 42;
+            expect(child.a).toBe(42);
+            child.counter = 0;
+            child.$watch(function(scope: IScopeExt) {
+                scope.counter++;
+            });
+            prototypeParent.$digest();
+            expect(child.counter).toBe(0);
+            hierarchyParent.$digest();
+            expect(child.counter).toBe(2);
+        });
+
+        it('can take some other scope as the parent', () => {
+            let prototypeParent: IScopeExt = new Scope();
+            let hierarchyParent: IScopeExt = new Scope();
+            let child: IScopeExt = prototypeParent.$new(false, hierarchyParent);
+
+            prototypeParent.a = 42;
+            expect(child.a).toBe(42);
+
+            child.counter = 0;
+            child.$watch((scope: IScopeExt) => scope.counter++);
+
+            prototypeParent.$digest();
+            expect(child.counter).toBe(0);
+
+            hierarchyParent.$digest();
+            expect(child.counter).toBe(2);
+        });
+
+
     });
 });

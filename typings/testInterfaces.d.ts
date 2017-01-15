@@ -4,6 +4,7 @@
 /// <reference path="../src/angular.ts" />
 
 interface IScopeExt extends IScope {
+    a?: any;
     anotherValue?: any;
     aProperty?: any;
     array?: any;
