@@ -20,6 +20,7 @@ interface IScope {
     $$everyScope(fn);
     $$phase;
     $$children: Array<IScope>;
+    $$lastDirtyWatch: IWatcher;
 }
 
 interface IWatcher {
@@ -33,13 +34,14 @@ function initWatchVal() {}
 
 class Scope implements IScope {
     private $$watchers: Array<IWatcher> = [];
-    private $$lastDirtyWatch: IWatcher = null;
+    $$lastDirtyWatch: IWatcher = null;
     private $$asyncQueue: Array<any> = [];
     private $$applyAsyncQueue: Array<any> = [];
     private $$applyAsyncId?: any = null;
     private $$postDigestQueue: Array<any> = [];
     $$children: Array<IScope> = [];
     $$phase: string = null;
+    $root: IScope = this;
 
     constructor() {}
 
@@ -52,20 +54,20 @@ class Scope implements IScope {
         };
 
         this.$$watchers.unshift(watcher); // if a watch removes itself, the watch collection gets shifted to the left, that's why unshift is needed. The trick is to reverse the $$watches array, so that new watches are added to the beginning of it and iteration is done from the end to the beginning. When a watcher is then removed, the part of the watch array that gets shifted has already been handled during that digest iteration and it won’t affect the rest of it.
-        this.$$lastDirtyWatch = null;
+        this.$root.$$lastDirtyWatch = null;
 
         return () => {
             let index = this.$$watchers.indexOf(watcher);
             if (index >= 0) {
                 this.$$watchers.splice(index, 1);
-                this.$$lastDirtyWatch = null;
+                this.$root.$$lastDirtyWatch = null;
             }
         };
     }
 
     $digest() {
         let dirty, ttl = 10;
-        this.$$lastDirtyWatch = null;
+        this.$root.$$lastDirtyWatch = null;
         this.$beginPhase('$digest');
 
         /**
@@ -112,13 +114,13 @@ class Scope implements IScope {
                     newValue = watcher.watchFn(scope);
                     oldValue = watcher.last;
                     if (!scope.$$areEqual(newValue, oldValue, watcher.valueEq)) {
-                        this.$$lastDirtyWatch = watcher;
+                        this.$root.$$lastDirtyWatch = watcher;
                         watcher.last = watcher.valueEq ? _.cloneDeep(newValue) : newValue;
                         watcher.listenerFn(newValue,
                             oldValue === initWatchVal ? newValue : oldValue,
                             scope);
                         dirty = true;
-                    } else if (watcher === this.$$lastDirtyWatch) {
+                    } else if (watcher === this.$root.$$lastDirtyWatch) {
                         continueLoop = false;
                         return false;
                     }
@@ -151,7 +153,7 @@ class Scope implements IScope {
             this.$eval(expr);
         } finally {
             this.$clearPhase();
-            this.$digest();
+            this.$root.$digest();
         }
     }
 
@@ -195,7 +197,7 @@ class Scope implements IScope {
                  don’t want to kick off a digest unnecessarily, if we have nothing to do.
                 * */
                 if (this.$$asyncQueue.length) {
-                    this.$digest();
+                    this.$root.$digest();
                 }
             }, 0);
         }
@@ -229,7 +231,7 @@ class Scope implements IScope {
 
     $$everyScope(fn) {
         if (fn(this)) {
-            return this.$$children.every((child) => child.$$everyScope(fn));
+            return this.$$children.every((childScope) => childScope.$$everyScope(fn));
         } else {
             return false;
         }

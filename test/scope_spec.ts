@@ -824,5 +824,40 @@ describe('Scope', function () {
             parent.$digest();
             expect(child.aValueWas).toBe('abc');
         });
+
+        it('digests from root on $apply', () => {
+            let parent: IScopeExt = new Scope();
+            let child = parent.$new();
+            let child2 = child.$new();
+
+            parent.aValue = 'abc';
+            parent.counter = 0;
+            parent.$watch(
+                (scope: IScopeExt) => scope.aValue,
+                (newValue, oldValue, scope: IScopeExt) => scope.counter++
+            );
+            child2.$apply((scope) => {});
+
+            expect(parent.counter).toBe(1);
+        });
+
+        it('schedules a digest from root on $evalAsync', (done) => {
+            let parent: IScopeExt = new Scope();
+            let child = parent.$new();
+            let child2 = child.$new();
+
+            parent.aValue = 'abc';
+            parent.counter = 0;
+            parent.$watch(
+                (scope: IScopeExt) => scope.aValue,
+                (newValue, oldValue, scope: IScopeExt) => scope.counter++
+            );
+            child2.$evalAsync(() => {});
+
+            setTimeout(() => {
+                expect(parent.counter).toBe(1);
+                done();
+            });
+        });
     });
 });
