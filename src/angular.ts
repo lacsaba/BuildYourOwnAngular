@@ -7,7 +7,7 @@
 interface IScope {
     $watch(
         whatchFn: (scope: IScope) => void,
-        listenerFn?: (oldValue: any, newValue: any, scope: IScope) => void,
+        listenerFn?: (newValue: any, oldValue: any, scope: IScope) => void,
         valuEq?: boolean
     );
     $digest();
@@ -17,12 +17,14 @@ interface IScope {
     $applyAsync(expr);
     $evalAsync(expr);
     $new();
+    $$everyScope(fn);
     $$phase;
+    $$children: Array<IScope>;
 }
 
 interface IWatcher {
     watchFn: (scope: IScope) => any;
-    listenerFn: (oldValue: any, newValue: any, scope: IScope) => void;
+    listenerFn: (newValue: any, oldValue: any, scope: IScope) => void;
     last?: any;
     valueEq?: boolean;
 }
@@ -36,6 +38,7 @@ class Scope implements IScope {
     private $$applyAsyncQueue: Array<any> = [];
     private $$applyAsyncId?: any = null;
     private $$postDigestQueue: Array<any> = [];
+    $$children: Array<IScope> = [];
     $$phase: string = null;
 
     constructor() {}
@@ -100,25 +103,30 @@ class Scope implements IScope {
     }
 
     $$digestOnce() {
-        let newValue, oldValue, dirty = false;
-        _.forEachRight(this.$$watchers, (watcher) => { // iteration order has to be reversed, because of the watchers being added to the beginning of the array
-            try {
-                if (!watcher) { return dirty; }
-                newValue = watcher.watchFn(this);
-                oldValue = watcher.last;
-                if (!this.$$areEqual(newValue, oldValue, watcher.valueEq)) {
-                    this.$$lastDirtyWatch = watcher;
-                    watcher.last = watcher.valueEq ? _.cloneDeep(newValue) : newValue;
-                    watcher.listenerFn(newValue,
-                        oldValue === initWatchVal ? newValue : oldValue,
-                        this);
-                    dirty = true;
-                } else if (watcher === this.$$lastDirtyWatch) {
-                    return false;
+        let dirty = false, continueLoop = true;
+        this.$$everyScope((scope) => {
+            let newValue, oldValue;
+            _.forEachRight(scope.$$watchers, (watcher) => { // iteration order has to be reversed, because of the watchers being added to the beginning of the array
+                try {
+                    if (!watcher) { return dirty; }
+                    newValue = watcher.watchFn(scope);
+                    oldValue = watcher.last;
+                    if (!scope.$$areEqual(newValue, oldValue, watcher.valueEq)) {
+                        this.$$lastDirtyWatch = watcher;
+                        watcher.last = watcher.valueEq ? _.cloneDeep(newValue) : newValue;
+                        watcher.listenerFn(newValue,
+                            oldValue === initWatchVal ? newValue : oldValue,
+                            scope);
+                        dirty = true;
+                    } else if (watcher === this.$$lastDirtyWatch) {
+                        continueLoop = false;
+                        return false;
+                    }
+                } catch (e) {
+                    console.log(e);
                 }
-            } catch (e) {
-                console.log(e);
-            }
+            });
+            return continueLoop;
         });
         return dirty;
     }
@@ -213,7 +221,17 @@ class Scope implements IScope {
         let ChildScope = () => {};
         ChildScope.prototype = this;
         let child = new ChildScope();
+        this.$$children.push(child);
         child.$$watchers = [];
+        child.$$children = [];
         return child;
+    }
+
+    $$everyScope(fn) {
+        if (fn(this)) {
+            return this.$$children.every((child) => child.$$everyScope(fn));
+        } else {
+            return false;
+        }
     }
 }
