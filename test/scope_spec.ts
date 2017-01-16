@@ -963,6 +963,29 @@ describe('Scope', function () {
             expect(child.counter).toBe(2);
         });
 
+        it('is no longer digested when $destroy has been called', () => {
+            let parent: IScopeExt = new Scope();
+            let child: IScopeExt = parent.$new();
 
+            child.aValue =[1, 2, 3];
+            child.counter = 0;
+            child.$watch(
+                (scope: IScopeExt) => scope.aValue,
+                (newValue, oldValue, scope: IScopeExt) => scope.counter++,
+                true
+            );
+
+            parent.$digest();
+            expect(child.counter).toBe(1);
+
+            child.aValue.push(4);
+            parent.$digest();
+            expect(child.counter).toBe(2);
+
+            child.$destroy();
+            child.aValue.push(5);
+            parent.$digest();
+            expect(child.counter).toBe(2);
+        });
     });
 });

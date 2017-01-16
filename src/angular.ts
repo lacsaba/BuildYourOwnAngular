@@ -19,6 +19,8 @@ interface IScope {
     $new(isolated?: boolean, scope?: IScope): IScope;
     $$everyScope(fn);
     $$postDigest(fn);
+    $destroy();
+    $parent: IScope;
     $$phase;
     $$children: Array<IScope>;
     $$lastDirtyWatch: IWatcher;
@@ -45,6 +47,7 @@ class Scope implements IScope {
     $$children: Array<IScope> = [];
     $$phase: string = null;
     $root: IScope = this;
+    $parent: IScope = null;
 
     constructor() {}
 
@@ -240,6 +243,7 @@ class Scope implements IScope {
         parentScope.$$children.push(child);
         child.$$watchers = [];
         child.$$children = [];
+        child.$parent = parentScope;
         return child;
     }
 
@@ -249,5 +253,16 @@ class Scope implements IScope {
         } else {
             return false;
         }
+    }
+
+    $destroy() {
+        if (this.$parent) {
+            let siblings = this.$parent.$$children;
+            let indexOfThis = siblings.indexOf(this);
+            if (indexOfThis >=0 ) {
+                siblings.splice(indexOfThis, 1);
+            }
+        }
+        this.$$watchers = null;
     }
 }
