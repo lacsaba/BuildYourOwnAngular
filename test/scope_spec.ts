@@ -945,22 +945,6 @@ describe('Scope', function () {
             expect(applied).toBe(true);
         });
 
-        it('can take some other scope as the parent', function() {
-            var prototypeParent: IScopeExt = new Scope();
-            var hierarchyParent: IScopeExt = new Scope();
-            var child: IScopeExt = prototypeParent.$new(false, hierarchyParent);
-            prototypeParent.a = 42;
-            expect(child.a).toBe(42);
-            child.counter = 0;
-            child.$watch(function(scope: IScopeExt) {
-                scope.counter++;
-            });
-            prototypeParent.$digest();
-            expect(child.counter).toBe(0);
-            hierarchyParent.$digest();
-            expect(child.counter).toBe(2);
-        });
-
         it('can take some other scope as the parent', () => {
             let prototypeParent: IScopeExt = new Scope();
             let hierarchyParent: IScopeExt = new Scope();
@@ -970,7 +954,7 @@ describe('Scope', function () {
             expect(child.a).toBe(42);
 
             child.counter = 0;
-            child.$watch((scope: IScopeExt) => scope.counter++);
+            child.$watch((scope: IScopeExt) => {scope.counter++;});
 
             prototypeParent.$digest();
             expect(child.counter).toBe(0);
