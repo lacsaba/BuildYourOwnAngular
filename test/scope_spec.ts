@@ -15,7 +15,7 @@ describe('Scope', function () {
         expect(scope.aProperty).toBe(1);
     });
 
-    describe('digest', function () {
+    describe('digest', () => {
 
         beforeEach(() => scope = new Scope());
 

@@ -59,7 +59,11 @@ class Scope implements IScope {
             valueEq: !!valueEq
         };
 
-        this.$$watchers.unshift(watcher); // if a watch removes itself, the watch collection gets shifted to the left, that's why unshift is needed. The trick is to reverse the $$watches array, so that new watches are added to the beginning of it and iteration is done from the end to the beginning. When a watcher is then removed, the part of the watch array that gets shifted has already been handled during that digest iteration and it won’t affect the rest of it.
+        // If a watch removes itself, the watch collection gets shifted to the left, that's why unshift is needed.
+        // The trick is to reverse the $$watches array, so that new watches are added to the beginning of it and
+        // iteration is done from the end to the beginning. When a watcher is then removed, the part of the watch
+        // array that gets shifted has already been handled during that digest iteration and it won’t affect the rest of it.
+        this.$$watchers.unshift(watcher);
         this.$root.$$lastDirtyWatch = null;
 
         return () => {
@@ -92,7 +96,7 @@ class Scope implements IScope {
                     let asyncTask = this.$$asyncQueue.shift();
                     asyncTask.scope.$eval(asyncTask.expression);
                 }
-                catch (e) { console.error(e); }
+                catch (e) { console.error('Error in $$asyncQueue: ' + e); }
             }
             dirty = this.$$digestOnce();
             if ((dirty || this.$$asyncQueue.length) && !(ttl--)) {
@@ -106,7 +110,7 @@ class Scope implements IScope {
             try {
                 this.$$postDigestQueue.shift()();
             }
-            catch (e) { console.error(e); }
+            catch (e) { console.error('Error in $$postDigestQueue: ' + e); }
         }
     }
 
@@ -131,7 +135,7 @@ class Scope implements IScope {
                         return false;
                     }
                 } catch (e) {
-                    console.log(e);
+                    console.log('Error in $$digestOnce: ' + e);
                 }
             });
             return continueLoop;
@@ -142,11 +146,10 @@ class Scope implements IScope {
     $$areEqual(newValue, oldValue, valueEq) {
         if (valueEq) {
             return _.isEqual(newValue, oldValue);
-        } else {
-            return newValue === oldValue
-                || (typeof newValue === 'number' && typeof oldValue === 'number'
-                && isNaN(newValue) && isNaN(oldValue));
         }
+        return newValue === oldValue
+            || (typeof newValue === 'number' && typeof oldValue === 'number'
+            && isNaN(newValue) && isNaN(oldValue));
     }
 
     $eval(expr, locals?: any) {
