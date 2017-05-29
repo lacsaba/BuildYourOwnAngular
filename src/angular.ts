@@ -186,7 +186,9 @@ class Scope implements IScope {
             try {
                 this.$$applyAsyncQueue.shift()();
             }
-            catch (e) { console.error(e); }
+            catch (e) {
+                console.error('Error in $$flushApplyAsync: ' + e);
+            }
         }
         this.$root.$$applyAsyncId = null;
     }
