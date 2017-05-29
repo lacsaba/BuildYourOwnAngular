@@ -19,7 +19,7 @@ module.exports = function (config) {
             ["node_modules/lodash/lodash.js"],
             //["node_modules/jquery/dist/jquery.js"],
             ["src/*.ts"],
-            ['test/**/*.ts']//, 'templates/**/*.html'
+            ['test/**/*_spec.ts']//, 'templates/**/*.html'
         ),
 
 
