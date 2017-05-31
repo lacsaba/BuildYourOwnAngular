@@ -230,9 +230,8 @@ class Scope implements IScope {
         this.$$postDigestQueue.push(fn);
     }
 
-    $new(isolated, parentScope) {
+    $new(isolated, parentScope = this) {
         let child;
-        parentScope = parentScope || this;
         if (isolated) {
             child = new Scope();
             child.$root = parentScope.$root;
