@@ -6,7 +6,7 @@
 
 interface IScope {
     $watch(
-        whatchFn: (scope: IScope) => void,
+        whatchFn: (scope: IScope) => any,
         listenerFn?: (newValue: any, oldValue: any, scope: IScope) => void,
         valuEq?: boolean
     );
@@ -26,6 +26,10 @@ interface IScope {
     $$lastDirtyWatch: IWatcher;
     $$applyAsyncId?: any;
     $$postDigestQueue?: Array<any>;
+    $watchCollection(
+        whatchFn: (scope: IScope) => any,
+        listenerFn?: (newValue: any, oldValue: any, scope: IScope) => void,
+    );
 }
 
 interface IWatcher {
@@ -51,7 +55,7 @@ class Scope implements IScope {
 
     constructor() {}
 
-    $watch(watchFn, listenerFn, valueEq) {
+    $watch(watchFn, listenerFn, valueEq?) {
         let watcher = {
             watchFn: watchFn,
             listenerFn: listenerFn || function () {},
@@ -268,5 +272,25 @@ class Scope implements IScope {
             }
         }
         this.$$watchers = null;
+    }
+
+    $watchCollection(watchFn, listenerFn) {
+        let newValue;
+        let oldValue;
+        let changeCount = 0;
+
+        let internalWatchFn = (scope) => {
+            newValue = watchFn(scope);
+
+            !this.$$areEqual(newValue, oldValue, false) && changeCount++;
+            oldValue = newValue;
+
+            return changeCount;
+        };
+        let internalListenerFn = () => {
+            listenerFn(newValue, oldValue, this);
+        };
+
+        return this.$watch(internalWatchFn, internalListenerFn);
     }
 }
