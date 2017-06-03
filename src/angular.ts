@@ -282,9 +282,32 @@ class Scope implements IScope {
         let internalWatchFn = (scope) => {
             newValue = watchFn(scope);
 
-            !this.$$areEqual(newValue, oldValue, false) && changeCount++;
-            oldValue = newValue;
+            if (_.isObject(newValue)) {
+                if (_.isArray(newValue)) {
+                    if (!_.isArray(oldValue)) {
+                        changeCount++;
+                        oldValue = [];
+                    }
+                    if (newValue.length !== oldValue.length) {
+                        changeCount++;
+                        oldValue.length = newValue.length;
+                    }
+                    _.forEach(newValue, (newItem, i) => {
+                        // Why not use $$areEqual here?
+                        //if (!this.$$areEqual(newItem, oldValue[i], false)) {
+                        let bothNaN = _.isNaN(newItem) && _.isNaN(oldValue[i]);
+                        if (!bothNaN && newItem !== oldValue[i]) {
+                            changeCount++;
+                            oldValue[i] = newItem;
+                        }
+                    });
+                } else {
 
+                }
+            } else {
+                !this.$$areEqual(newValue, oldValue, false) && changeCount++;
+                oldValue = newValue;
+            }
             return changeCount;
         };
         let internalListenerFn = () => {

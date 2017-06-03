@@ -357,13 +357,123 @@ describe('Scope', () => {
 
                 scope.$watchCollection(
                     scope => scope.aValue,
-                    (newValue, oldValue, scope) => {
-                        scope.counter++;
-                    }
+                    (newValue, oldValue, scope) => scope.counter++
                 );
 
                 scope.$digest();
                 expect(scope.counter).toBe(1);
+                scope.$digest();
+                expect(scope.counter).toBe(1);
+            });
+
+            it('notices when the value becomes an array', () => {
+                scope.counter = 0;
+
+                scope.$watchCollection(
+                    scope => scope.arr,
+                    (newValue, oldValue, scope) => scope.counter++
+                );
+
+                scope.$digest();
+                expect(scope.counter).toBe(1);
+
+                scope.arr = [1, 2, 3];
+                scope.$digest();
+                expect(scope.counter).toBe(2);
+
+                scope.$digest();
+                expect(scope.counter).toBe(2);
+            });
+
+            it('notices an item added to an array', () => {
+                scope.arr = [1, 2, 3];
+                scope.counter = 0;
+
+                scope.$watchCollection(
+                    scope => scope.arr,
+                    (newValue, oldValue, scope) => scope.counter++
+                );
+
+                scope.$digest();
+                expect(scope.counter).toBe(1);
+
+                scope.arr.push(4);
+                scope.$digest();
+                expect(scope.counter).toBe(2);
+
+                scope.$digest();
+                expect(scope.counter).toBe(2);
+            });
+
+            it('notices an item removed to an array', () => {
+                scope.arr = [1, 2, 3];
+                scope.counter = 0;
+
+                scope.$watchCollection(
+                    scope => scope.arr,
+                    (newValue, oldValue, scope) => scope.counter++
+                );
+
+                scope.$digest();
+                expect(scope.counter).toBe(1);
+
+                scope.arr.shift();
+                scope.$digest();
+                expect(scope.counter).toBe(2);
+
+                scope.$digest();
+                expect(scope.counter).toBe(2);
+            });
+
+            it('notices an item replaced in an array', () => {
+                scope.arr = [1, 2, 3];
+                scope.counter = 0;
+
+                scope.$watchCollection(
+                    scope => scope.arr,
+                    (newValue, oldValue, scope) => scope.counter++
+                );
+
+                scope.$digest();
+                expect(scope.counter).toBe(1);
+
+                scope.arr[1] = 42;
+                scope.$digest();
+                expect(scope.counter).toBe(2);
+
+                scope.$digest();
+                expect(scope.counter).toBe(2);
+            });
+
+            it('notices items reordered in an array', () => {
+                scope.arr = [2, 1, 3];
+                scope.counter = 0;
+
+                scope.$watchCollection(
+                    scope => scope.arr,
+                    (newValue, oldValue, scope) => scope.counter++
+                );
+
+                scope.$digest();
+                expect(scope.counter).toBe(1);
+
+                scope.arr.sort();
+                scope.$digest();
+                expect(scope.counter).toBe(2);
+
+                scope.$digest();
+                expect(scope.counter).toBe(2);
+            });
+
+            it('does not fail on NaNs in arrays', () => {
+                scope.arr = [2, NaN, 3];
+                scope.counter = 0;
+
+                scope.$watchCollection(
+                    scope => scope.arr,
+                    (newValue, oldValue, scope) => scope.counter++
+                );
+
                 scope.$digest();
                 expect(scope.counter).toBe(1);
             });
