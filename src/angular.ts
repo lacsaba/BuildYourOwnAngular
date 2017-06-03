@@ -283,7 +283,7 @@ class Scope implements IScope {
             newValue = watchFn(scope);
 
             if (_.isObject(newValue)) {
-                if (_.isArray(newValue)) {
+                if (this.isArrayLike(newValue)) {
                     if (!_.isArray(oldValue)) {
                         changeCount++;
                         oldValue = [];
@@ -315,5 +315,14 @@ class Scope implements IScope {
         };
 
         return this.$watch(internalWatchFn, internalListenerFn);
+    }
+
+    isArrayLike(obj) {
+        if (_.isNull(obj) || _.isUndefined(obj)) {
+            return false;
+        }
+
+        let length = obj.length;
+        return _.isNumber(length);
     }
 }

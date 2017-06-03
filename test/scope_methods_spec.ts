@@ -477,6 +477,50 @@ describe('Scope', () => {
                 scope.$digest();
                 expect(scope.counter).toBe(1);
             });
+
+            it('notices an item replaced in an arguments object', () => {
+                (function (a, b, c) {
+                    scope.arrayLike = arguments;
+                })(1, 2, 3);
+                scope.counter = 0;
+
+                scope.$watchCollection(
+                    scope => scope.arrayLike,
+                    (newValue, oldValue, scope) => scope.counter++
+                );
+
+                scope.$digest();
+                expect(scope.counter).toBe(1);
+
+                scope.arrayLike[1] = 42;
+                scope.$digest();
+                expect(scope.counter).toBe(2);
+
+                scope.$digest();
+                expect(scope.counter).toBe(2);
+            });
+
+            it('notices an item replaced in a NodeList object', () => {
+                document.documentElement.appendChild(document.createElement('div'));
+                scope.arrayLike = document.getElementsByTagName('div');
+
+                scope.counter = 0;
+
+                scope.$watchCollection(
+                    scope => scope.arrayLike,
+                    (newValue, oldValue, scope) => scope.counter++
+                );
+
+                scope.$digest();
+                expect(scope.counter).toBe(1);
+
+                document.documentElement.appendChild(document.createElement('div'));
+                scope.$digest();
+                expect(scope.counter).toBe(2);
+
+                scope.$digest();
+                expect(scope.counter).toBe(2);
+            });
         });
     });
 });

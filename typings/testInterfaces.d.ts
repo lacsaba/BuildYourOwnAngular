@@ -8,6 +8,7 @@ interface IScopeExt extends IScope {
     anotherValue?: any;
     aProperty?: any;
     array?: any;
+    arrayLike?: object;
     asyncApplied?: boolean;
     asyncEvaluated?: boolean;
     asyncEvaluatedImmediately?: boolean;
