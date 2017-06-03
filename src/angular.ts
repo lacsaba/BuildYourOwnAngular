@@ -302,7 +302,10 @@ class Scope implements IScope {
                         }
                     });
                 } else {
-
+                    if (!_.isObject(oldValue) || this.isArrayLike(oldValue)) {
+                        changeCount++;
+                        oldValue = {};
+                    }
                 }
             } else {
                 !this.$$areEqual(newValue, oldValue, false) && changeCount++;

@@ -24,6 +24,7 @@ interface IScopeExt extends IScope {
     name?: any;
     nameUpper?: any;
     number?: number;
+    obj: object;
     phaseInApplyFunction?: any;
     phaseInListenerFunction?: any;
     phaseInWatchFunction?: any;
