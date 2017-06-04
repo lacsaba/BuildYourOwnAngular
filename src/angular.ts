@@ -12,14 +12,14 @@ interface IScope {
     );
     $digest();
     $$digestOnce();
-    $eval(expr, locals?: any);
+    $eval(expr: (scope: IScope) => any, locals?: Object): any;
     $apply(expr);
     $applyAsync(expr);
     $evalAsync(expr);
     $new(isolated?: boolean, scope?: IScope): IScope;
     $$everyScope(fn);
     $$postDigest(fn);
-    $destroy();
+    $destroy(): void;
     $parent: IScope;
     $$phase;
     $$children: Array<IScope>;
@@ -30,6 +30,8 @@ interface IScope {
         whatchFn: (scope: IScope) => any,
         listenerFn?: (newValue: any, oldValue: any, scope: IScope) => void,
     );
+    $$listeners: IListenerContainer;
+    $on(name: string, listener: (event: IAngularEvent, ...args: any[]) => any): void;
 }
 
 interface IWatcher {
@@ -37,6 +39,21 @@ interface IWatcher {
     listenerFn: (newValue: any, oldValue: any, scope: IScope) => void;
     last?: any;
     valueEq?: boolean;
+}
+
+interface IAngularEvent {
+    targetScope: IScope;
+    currentScope: IScope;
+    name: string;
+    preventDefault: Function;
+    defaultPrevented: boolean;
+
+    // Available only events that were $emit-ted
+    stopPropagation?: Function;
+}
+
+interface IListenerContainer {
+    [eventName: string]: ((event: IAngularEvent, ...args: any[]) => any)[];
 }
 
 function initWatchVal() {}
@@ -52,6 +69,7 @@ class Scope implements IScope {
     $$phase: string = null;
     $root: IScope = this;
     $parent: IScope = null;
+    $$listeners: any = {};
 
     constructor() {}
 
@@ -250,6 +268,7 @@ class Scope implements IScope {
 
         parentScope.$$children.push(child);
         child.$$watchers = [];
+        child.$$listeners = {};
         child.$$children = [];
         child.$parent = parentScope;
         return child;
@@ -364,5 +383,13 @@ class Scope implements IScope {
 
         let length = obj.length;
         return length === 0 || (_.isNumber(length) && length > 0 && (length - 1) in obj);
+    }
+
+    $on(eventName, listenerFn) {
+        let listeners = this.$$listeners[eventName];
+        if (!listeners) {
+            this.$$listeners[eventName] = listeners = [];
+        }
+        listeners.push(listenerFn);
     }
 }
