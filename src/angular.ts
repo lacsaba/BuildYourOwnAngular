@@ -395,17 +395,19 @@ class Scope implements IScope {
         listeners.push(listenerFn);
     }
 
-    $emit(eventName) {
+    // not in Angular
+    $$fireEventOnScope(eventName) {
         let listeners = this.$$listeners[eventName] || [];
         _.forEach(listeners, (listener, key) => {
             listener();
         });
     }
 
+    $emit(eventName) {
+        this.$$fireEventOnScope(eventName);
+    }
+
     $broadcast(eventName) {
-        let listeners = this.$$listeners[eventName] || [];
-        _.forEach(listeners, (listener, key) => {
-            listener();
-        });
+        this.$$fireEventOnScope(eventName);
     }
 }
