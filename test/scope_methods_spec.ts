@@ -540,6 +540,62 @@ describe('Scope', () => {
                 scope.$digest();
                 expect(scope.counter).toBe(2);
             });
+
+            it('notices when an attribute is added to the object', () => {
+                scope.counter = 0;
+                scope.obj = { a: 1 };
+
+                scope.$watchCollection(
+                    scope => scope.obj,
+                    (newValue, oldValue, scope) => scope.counter++
+                );
+
+                scope.$digest();
+                expect(scope.counter).toBe(1);
+
+                scope.obj.b = 42;
+                scope.$digest();
+                expect(scope.counter).toBe(2);
+
+                scope.$digest();
+                expect(scope.counter).toBe(2);
+            });
+
+            it('notices when an attribute is changed in an object', () => {
+                scope.counter = 0;
+                scope.obj = { a: 1 };
+
+                scope.$watchCollection(
+                    scope => scope.obj,
+                    (newValue, oldValue, scope) => scope.counter++
+                );
+
+                scope.$digest();
+                expect(scope.counter).toBe(1);
+
+                scope.obj.a = 42;
+                scope.$digest();
+                expect(scope.counter).toBe(2);
+
+                scope.$digest();
+                expect(scope.counter).toBe(2);
+            });
+
+            it('does nat fail on NaN attributes in objects', () => {
+                scope.counter = 0;
+                scope.obj = { a: NaN };
+
+                scope.$watchCollection(
+                    scope => scope.obj,
+                    (newValue, oldValue, scope) => scope.counter++
+                );
+
+                scope.$digest();
+                expect(scope.counter).toBe(1);
+
+                scope.$digest();
+                expect(scope.counter).toBe(1);
+            });
         });
     });
 });

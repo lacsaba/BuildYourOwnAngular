@@ -306,6 +306,14 @@ class Scope implements IScope {
                         changeCount++;
                         oldValue = {};
                     }
+                    _.forOwn(newValue, (newVal, key) => {
+                        var bothNaN = _.isNaN(newVal) && _.isNaN(oldValue[key]);
+                        if (!bothNaN && oldValue[key] !== newVal) { 
+                            changeCount++;
+                            oldValue[key] = newVal;
+                        }
+                        
+                    });
                 }
             } else {
                 !this.$$areEqual(newValue, oldValue, false) && changeCount++;
