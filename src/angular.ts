@@ -255,7 +255,7 @@ class Scope implements IScope {
         return child;
     }
 
-    $$everyScope(fn) {
+    $$everyScope(fn: Function) {
         if (fn(this)) {
             return this.$$children.every((childScope) => childScope.$$everyScope(fn));
         } else {
@@ -265,7 +265,7 @@ class Scope implements IScope {
 
     $destroy() {
         if (this.$parent) {
-            let siblings = this.$parent.$$children;
+            let siblings: Array<IScope> = this.$parent.$$children;
             let indexOfThis = siblings.indexOf(this);
             if (indexOfThis >=0 ) {
                 siblings.splice(indexOfThis, 1);
@@ -278,7 +278,10 @@ class Scope implements IScope {
         let newValue;
         let oldValue;
         let oldLength;
+        let veryOldValue;
+        let trackVeryOldValue: boolean = listenerFn.length > 1;
         let changeCount = 0;
+        let firstRun: boolean = true;
 
         let internalWatchFn = (scope) => {
             let newLength;
@@ -341,7 +344,14 @@ class Scope implements IScope {
             return changeCount;
         };
         let internalListenerFn = () => {
-            listenerFn(newValue, oldValue, this);
+            if (firstRun) {
+                listenerFn(newValue, newValue, this);
+                firstRun = false;
+            } else {
+                listenerFn(newValue, veryOldValue, this);
+            }
+
+            trackVeryOldValue && (veryOldValue = _.clone(newValue));
         };
 
         return this.$watch(internalWatchFn, internalListenerFn);
