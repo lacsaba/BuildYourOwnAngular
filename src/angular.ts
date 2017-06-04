@@ -32,6 +32,8 @@ interface IScope {
     );
     $$listeners: IListenerContainer;
     $on(name: string, listener: (event: IAngularEvent, ...args: any[]) => any): void;
+    $emit(name: string);
+    $broadcast(name: string);
 }
 
 interface IWatcher {
@@ -391,5 +393,19 @@ class Scope implements IScope {
             this.$$listeners[eventName] = listeners = [];
         }
         listeners.push(listenerFn);
+    }
+
+    $emit(eventName) {
+        let listeners = this.$$listeners[eventName] || [];
+        _.forEach(listeners, (listener, key) => {
+            listener();
+        });
+    }
+
+    $broadcast(eventName) {
+        let listeners = this.$$listeners[eventName] || [];
+        _.forEach(listeners, (listener, key) => {
+            listener();
+        });
     }
 }
