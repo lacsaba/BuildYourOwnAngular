@@ -277,9 +277,11 @@ class Scope implements IScope {
     $watchCollection(watchFn, listenerFn) {
         let newValue;
         let oldValue;
+        let oldLength;
         let changeCount = 0;
 
         let internalWatchFn = (scope) => {
+            let newLength;
             newValue = watchFn(scope);
 
             if (_.isObject(newValue)) {
@@ -305,20 +307,32 @@ class Scope implements IScope {
                     if (!_.isObject(oldValue) || this.isArrayLike(oldValue)) {
                         changeCount++;
                         oldValue = {};
+                        oldLength = 0;
                     }
+                    newLength = 0;
                     _.forOwn(newValue, (newVal, key) => {
-                        var bothNaN = _.isNaN(newVal) && _.isNaN(oldValue[key]);
-                        if (!bothNaN && oldValue[key] !== newVal) { 
+                        newLength++;
+                        if (oldValue.hasOwnProperty(key)){
+                            var bothNaN = _.isNaN(newVal) && _.isNaN(oldValue[key]);
+                            if (!bothNaN && oldValue[key] !== newVal) { 
+                                changeCount++;
+                                oldValue[key] = newVal;
+                            }
+                        } else {
                             changeCount++;
+                            oldLength++;
                             oldValue[key] = newVal;
-                        }   
-                    });
-                    _.forOwn(oldValue, (oldVal, key) => {
-                        if (!newValue.hasOwnProperty(key)) {
-                            changeCount++;
-                            newValue[key] = oldVal;
                         }
                     });
+                    if (oldLength > newLength) {
+                        changeCount++;
+                        _.forOwn(oldValue, (oldVal, key) => {
+                        if (!newValue.hasOwnProperty(key)) {
+                            oldLength--;
+                            delete oldValue[key];
+                        }
+                    });
+                    }
                 }
             } else {
                 !this.$$areEqual(newValue, oldValue, false) && changeCount++;
