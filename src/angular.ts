@@ -311,8 +311,13 @@ class Scope implements IScope {
                         if (!bothNaN && oldValue[key] !== newVal) { 
                             changeCount++;
                             oldValue[key] = newVal;
+                        }   
+                    });
+                    _.forOwn(oldValue, (oldVal, key) => {
+                        if (!newValue.hasOwnProperty(key)) {
+                            changeCount++;
+                            newValue[key] = oldVal;
                         }
-                        
                     });
                 }
             } else {
