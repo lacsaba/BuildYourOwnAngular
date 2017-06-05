@@ -403,11 +403,8 @@ class Scope implements IScope {
     }
 
     // not in Angular
-    $$fireEventOnScope(eventName, additionalArgs) {
-        let event = {
-            name: eventName
-        };
-        let listenerArgs = [event].concat(additionalArgs);
+    $$fireEventOnScope(eventName, listenerArgs) {
+        
         let listeners = this.$$listeners[eventName] || [];
         let i = 0;
         while(i < listeners.length) {
@@ -422,12 +419,24 @@ class Scope implements IScope {
     }
 
     $emit(eventName) {
-        let additionalArgs = _.tail(arguments);
-        return this.$$fireEventOnScope(eventName, additionalArgs);
+        let event = {
+            name: eventName
+        };
+        let listenerArgs = [event].concat(_.tail(arguments));
+        let scope = this;
+        do {
+            scope.$$fireEventOnScope(eventName, listenerArgs);
+            scope = scope.$parent;
+        } while(scope);
+        return event;
     }
 
     $broadcast(eventName) {
-        let additionalArgs = _.tail(arguments);
-        return this.$$fireEventOnScope(eventName, additionalArgs);
+        let event = {
+            name: eventName
+        };
+        let listenerArgs = [event].concat(_.tail(arguments));
+        this.$$fireEventOnScope(eventName, listenerArgs);
+        return event;
     }
 }

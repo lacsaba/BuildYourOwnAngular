@@ -131,5 +131,32 @@ describe('Scope', () => {
                 expect(nextListener).toHaveBeenCalled();
             });
         });
+
+        it('propagates up the scope hierarchy on $emit', () => {
+            let parentListener = jasmine.createSpy('');
+            let scopeListener = jasmine.createSpy('');
+
+            parent.$on('someEvent', parentListener);
+            scope.$on('someEvent', scopeListener);
+
+            scope.$emit('someEvent');
+
+            expect(scopeListener).toHaveBeenCalled();
+            expect(parentListener).toHaveBeenCalled();
+        });
+
+        it('propagates the same event up on $emit', () => {
+            let parentListener = jasmine.createSpy('');
+            let scopeListener = jasmine.createSpy('');
+
+            parent.$on('someEvent', parentListener);
+            scope.$on('someEvent', scopeListener);
+
+            scope.$emit('someEvent');
+
+            let scopeEvent = scopeListener.calls.mostRecent().args[0];
+            let parentEvent = parentListener.calls.mostRecent().args[0];
+            expect(scopeEvent).toBe(parentEvent);
+        });
     });
 });
