@@ -56,10 +56,37 @@ describe('Scope', () => {
             scope.$on('someEvent', listener1);
             scope.$on('someOtherEvent', listener2);
 
-            scope.$emit('someEvent');
+            scope[method]('someEvent');
 
             expect(listener1).toHaveBeenCalled();
             expect(listener2).not.toHaveBeenCalled();
+            });
+            
+            it('passes an event object with a name to listeners on ' + method, () => {
+                let listener = jasmine.createSpy('');
+                scope.$on('someEvent', listener);
+
+                scope[method]('someEvent');
+
+                expect(listener).toHaveBeenCalled();
+                expect(listener.calls.mostRecent().args[0].name).toEqual('someEvent');
+            });
+
+            it('passes the same event object to each listener on ' + method, () => {
+                let listener1 = jasmine.createSpy('');
+                let listener2 = jasmine.createSpy('');
+                scope.$on('someEvent', listener1);
+                scope.$on('someEvent', listener2);
+
+                scope[method]('someEvent');
+
+                expect(listener1).toHaveBeenCalled();
+                expect(listener2).toHaveBeenCalled();
+
+                let event1 = listener1.calls.mostRecent().args[0];
+                let event2 = listener2.calls.mostRecent().args[0];
+
+                expect(event1).toBe(event2);
             });
         });
     });
