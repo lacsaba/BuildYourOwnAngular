@@ -31,7 +31,7 @@ interface IScope {
         listenerFn?: (newValue: any, oldValue: any, scope: IScope) => void,
     );
     $$listeners: IListenerContainer;
-    $on(name: string, listener: (event: IAngularEvent, ...args: any[]) => any): void;
+    $on(name: string, listener: (event: IAngularEvent, ...args: any[]) => any): Function;
     $emit(name: string): IAngularEvent;
     $broadcast(name: string): IAngularEvent;
 }
@@ -393,6 +393,13 @@ class Scope implements IScope {
             this.$$listeners[eventName] = listeners = [];
         }
         listeners.push(listenerFn);
+
+        return () => {
+            let index = listeners.indexOf(listenerFn);
+            if (index > -1) {
+                listeners[index] = null;
+            }
+        };
     }
 
     // not in Angular
@@ -402,9 +409,15 @@ class Scope implements IScope {
         };
         let listenerArgs = [event].concat(additionalArgs);
         let listeners = this.$$listeners[eventName] || [];
-        _.forEach(listeners, (listener, key) => {
-            listener.apply(null, listenerArgs);
-        });
+        let i = 0;
+        while(i < listeners.length) {
+            if (listeners[i] === null) {
+                listeners.splice(i, 1);
+            } else {
+                listeners[i].apply(null, listenerArgs);
+                i++;
+            }
+        }
         return event;
     }
 
