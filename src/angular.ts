@@ -420,7 +420,8 @@ class Scope implements IScope {
 
     $emit(eventName) {
         let event = {
-            name: eventName
+            name: eventName,
+            targetScope: this
         };
         let listenerArgs = [event].concat(_.tail(arguments));
         let scope = this as IScope;
@@ -433,7 +434,8 @@ class Scope implements IScope {
 
     $broadcast(eventName) {
         let event = {
-            name: eventName
+            name: eventName,
+            targetScope: this
         };
         let listenerArgs = [event].concat(_.tail(arguments));
         this.$$everyScope(scope => {

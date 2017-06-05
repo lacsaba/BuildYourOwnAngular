@@ -193,5 +193,31 @@ describe('Scope', () => {
             expect(scopeEvent).toBe(childEvent);
             expect(childEvent).toBe(isolatedChildEvent);
         });
+
+        it('attaches targetScope on $emit', () => {
+            let scopeListener = jasmine.createSpy('');
+            let parentListener = jasmine.createSpy('');
+
+            scope.$on('someEvent', scopeListener);
+            parent.$on('someEvent', parentListener);
+
+            scope.$emit('someEvent');
+
+            expect(scopeListener.calls.mostRecent().args[0].targetScope).toBe(scope);
+            expect(parentListener.calls.mostRecent().args[0].targetScope).toBe(scope);
+        });
+
+        it('attaches targetScope on $broadcast', () => {
+            let scopeListener = jasmine.createSpy('');
+            let childListener = jasmine.createSpy('');
+
+            scope.$on('someEvent', scopeListener);
+            child.$on('someEvent', childListener);
+
+            scope.$broadcast('someEvent');
+
+            expect(scopeListener.calls.mostRecent().args[0].targetScope).toBe(scope);
+            expect(childListener.calls.mostRecent().args[0].targetScope).toBe(scope);
+        });
     });
 });
