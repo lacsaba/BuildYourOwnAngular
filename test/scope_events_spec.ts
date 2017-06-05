@@ -91,13 +91,20 @@ describe('Scope', () => {
 
             it('passes additional arguments to listeners on ' + method, () => {
                 let listener = jasmine.createSpy('');
-                scope.$on('someEvent', listener);
+                scope.$on('someArgEvent', listener);
 
-                scope[method]('someEvent', 'and', ['additional', 'arguments'], '...');
+                scope[method]('someArgEvent', 'and', ['additional', 'arguments'], '...');
 
                 expect(listener.calls.mostRecent().args[1]).toEqual('and');
                 expect(listener.calls.mostRecent().args[2]).toEqual(['additional', 'arguments']);
                 expect(listener.calls.mostRecent().args[3]).toEqual('...');
+            });
+
+            it('returns the event object on ' + method, () => {
+                var returnedEvent = scope[method]('someEvent');
+
+                expect(returnedEvent).toBeDefined();
+                expect(returnedEvent.name).toEqual('someEvent');
             });
         });
     });

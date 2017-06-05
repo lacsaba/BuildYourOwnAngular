@@ -32,8 +32,8 @@ interface IScope {
     );
     $$listeners: IListenerContainer;
     $on(name: string, listener: (event: IAngularEvent, ...args: any[]) => any): void;
-    $emit(name: string);
-    $broadcast(name: string);
+    $emit(name: string): IAngularEvent;
+    $broadcast(name: string): IAngularEvent;
 }
 
 interface IWatcher {
@@ -44,11 +44,11 @@ interface IWatcher {
 }
 
 interface IAngularEvent {
-    targetScope: IScope;
-    currentScope: IScope;
+    targetScope?: IScope;
+    currentScope?: IScope;
     name: string;
-    preventDefault: Function;
-    defaultPrevented: boolean;
+    preventDefault?: Function;
+    defaultPrevented?: boolean;
 
     // Available only events that were $emit-ted
     stopPropagation?: Function;
@@ -405,15 +405,16 @@ class Scope implements IScope {
         _.forEach(listeners, (listener, key) => {
             listener.apply(null, listenerArgs);
         });
+        return event;
     }
 
     $emit(eventName) {
         let additionalArgs = _.tail(arguments);
-        this.$$fireEventOnScope(eventName, additionalArgs);
+        return this.$$fireEventOnScope(eventName, additionalArgs);
     }
 
     $broadcast(eventName) {
         let additionalArgs = _.tail(arguments);
-        this.$$fireEventOnScope(eventName, additionalArgs);
+        return this.$$fireEventOnScope(eventName, additionalArgs);
     }
 }
