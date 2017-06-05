@@ -34,6 +34,7 @@ interface IScope {
     $on(name: string, listener: (event: IAngularEvent, ...args: any[]) => any): Function;
     $emit(name: string): IAngularEvent;
     $broadcast(name: string): IAngularEvent;
+    $$fireEventOnScope(eventName, listenerArgs);
 }
 
 interface IWatcher {
@@ -403,8 +404,7 @@ class Scope implements IScope {
     }
 
     // not in Angular
-    $$fireEventOnScope(eventName, listenerArgs) {
-        
+    $$fireEventOnScope(eventName, listenerArgs) {        
         let listeners = this.$$listeners[eventName] || [];
         let i = 0;
         while(i < listeners.length) {
@@ -423,7 +423,7 @@ class Scope implements IScope {
             name: eventName
         };
         let listenerArgs = [event].concat(_.tail(arguments));
-        let scope = this;
+        let scope = this as IScope;
         do {
             scope.$$fireEventOnScope(eventName, listenerArgs);
             scope = scope.$parent;
@@ -436,7 +436,11 @@ class Scope implements IScope {
             name: eventName
         };
         let listenerArgs = [event].concat(_.tail(arguments));
-        this.$$fireEventOnScope(eventName, listenerArgs);
+        this.$$everyScope(scope => {
+            scope.$$fireEventOnScope(eventName, listenerArgs);
+            return true;
+        });
+        
         return event;
     }
 }

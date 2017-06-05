@@ -158,5 +158,40 @@ describe('Scope', () => {
             let parentEvent = parentListener.calls.mostRecent().args[0];
             expect(scopeEvent).toBe(parentEvent);
         });
+
+        it('propagates down the scope hierarchy on $broadcast', () => {
+            let scopeListener = jasmine.createSpy('');
+            let childListener = jasmine.createSpy('');
+            let isolatedChildListener = jasmine.createSpy('');
+
+            scope.$on('someEvent', scopeListener);
+            child.$on('someEvent', childListener);
+            isolatedChild.$on('someEvent', isolatedChildListener);
+
+            scope.$broadcast('someEvent');
+
+            expect(scopeListener).toHaveBeenCalled();
+            expect(childListener).toHaveBeenCalled();
+            expect(isolatedChildListener).toHaveBeenCalled();
+        });
+
+        it('propagates the same event down on $broadcast', () => {
+            let scopeListener = jasmine.createSpy('');
+            let childListener = jasmine.createSpy('');
+            let isolatedChildListener = jasmine.createSpy('');
+
+            scope.$on('someEvent', scopeListener);
+            child.$on('someEvent', childListener);
+            isolatedChild.$on('someEvent', isolatedChildListener);
+
+            scope.$broadcast('someEvent');
+
+            let scopeEvent = scopeListener.calls.mostRecent().args[0];
+            let childEvent = childListener.calls.mostRecent().args[0];
+            let isolatedChildEvent = isolatedChildListener.calls.mostRecent().args[0];
+
+            expect(scopeEvent).toBe(childEvent);
+            expect(childEvent).toBe(isolatedChildEvent);
+        });
     });
 });
