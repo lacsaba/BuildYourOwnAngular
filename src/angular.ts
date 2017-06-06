@@ -421,28 +421,33 @@ class Scope implements IScope {
     $emit(eventName) {
         let event = {
             name: eventName,
-            targetScope: this
+            targetScope: this,
+            currentScope: null
         };
         let listenerArgs = [event].concat(_.tail(arguments));
         let scope = this as IScope;
         do {
+            event.currentScope = scope;
             scope.$$fireEventOnScope(eventName, listenerArgs);
             scope = scope.$parent;
         } while(scope);
+        event.currentScope = null;
         return event;
     }
 
     $broadcast(eventName) {
         let event = {
             name: eventName,
-            targetScope: this
+            targetScope: this,
+            currentScope: null
         };
         let listenerArgs = [event].concat(_.tail(arguments));
         this.$$everyScope(scope => {
+            event.currentScope = scope;
             scope.$$fireEventOnScope(eventName, listenerArgs);
             return true;
         });
-        
+        event.currentScope = null;
         return event;
     }
 }
