@@ -295,6 +295,7 @@ class Scope implements IScope {
             }
         }
         this.$$watchers = null;
+        this.$$listeners = {};
     }
 
     $watchCollection(watchFn, listenerFn) {
