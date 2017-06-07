@@ -424,7 +424,9 @@ class Scope implements IScope {
             name: eventName,
             targetScope: this,
             currentScope: null,
-            stopPropagation: () => { propagationStopped = true; }
+            stopPropagation: () => propagationStopped = true,
+            defaultPrevented: false,
+            preventDefault: () => event.defaultPrevented = true
         };
         let listenerArgs = [event].concat(_.tail(arguments));
         let scope = this as IScope;
@@ -441,7 +443,9 @@ class Scope implements IScope {
         let event = {
             name: eventName,
             targetScope: this,
-            currentScope: null
+            currentScope: null,
+            defaultPrevented: false,
+            preventDefault: () => event.defaultPrevented = true
         };
         let listenerArgs = [event].concat(_.tail(arguments));
         this.$$everyScope(scope => {
