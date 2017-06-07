@@ -28,7 +28,7 @@ interface IScope {
     $$postDigestQueue?: Array<any>;
     $watchCollection(
         whatchFn: (scope: IScope) => any,
-        listenerFn?: (newValue: any, oldValue: any, scope: IScope) => void,
+        listenerFn?: (newValue: any, oldValue: any, scope: IScope) => void
     );
     $$listeners: IListenerContainer;
     $on(name: string, listener: (event: IAngularEvent, ...args: any[]) => any): Function;
@@ -419,10 +419,12 @@ class Scope implements IScope {
     }
 
     $emit(eventName) {
+        let propagationStopped = false;
         let event = {
             name: eventName,
             targetScope: this,
-            currentScope: null
+            currentScope: null,
+            stopPropagation: () => { propagationStopped = true; }
         };
         let listenerArgs = [event].concat(_.tail(arguments));
         let scope = this as IScope;
@@ -430,7 +432,7 @@ class Scope implements IScope {
             event.currentScope = scope;
             scope.$$fireEventOnScope(eventName, listenerArgs);
             scope = scope.$parent;
-        } while(scope);
+        } while(scope && !propagationStopped);
         event.currentScope = null;
         return event;
     }
