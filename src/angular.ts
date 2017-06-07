@@ -286,6 +286,7 @@ class Scope implements IScope {
     }
 
     $destroy() {
+        this.$broadcast('$destroy');
         if (this.$parent) {
             let siblings: Array<IScope> = this.$parent.$$children;
             let indexOfThis = siblings.indexOf(this);

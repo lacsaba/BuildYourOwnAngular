@@ -303,5 +303,23 @@ describe('Scope', () => {
 
             expect(listener2).toHaveBeenCalled();
         });
+
+        it('fires $destroy when destroyed', () => {
+            let listener = jasmine.createSpy('');
+            scope.$on('$destroy', listener);
+
+            scope.$destroy();
+
+            expect(listener).toHaveBeenCalled();
+        });
+
+        it('fires destroy on children destroyed', () => {
+            let listener = jasmine.createSpy('');
+            child.$on('$destroy', listener);
+
+            scope.$destroy();
+
+            expect(listener).toHaveBeenCalled();
+        });
     });
 });
